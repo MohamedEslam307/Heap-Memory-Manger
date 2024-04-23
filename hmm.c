@@ -16,7 +16,7 @@ void *calloc(size_t nmemb, size_t size)
         return NULL;
     }else{
         unsigned char *ptr=(unsigned char*)malloc((nmemb*size));
-        memset(ptr,0,nmemb*size);
+        memset(ptr,0,(nmemb*size));
         return ptr;
     }
 }
@@ -28,14 +28,18 @@ void *realloc(void *ptr, size_t size)
     }else if(0==size){
         free(ptr);
     }else{
-        newptr=malloc(size);
-        if(newptr!=NULL){
-            if(size<((node_t *)((uint8_t*)ptr-8))->size)
-                memcpy(newptr,ptr,size);
-            else
-                memcpy(newptr,ptr,((node_t *)(ptr-8))->size);
-            free(ptr);
-        }
+        if(size==((node_t *)(ptr-8))->size){
+            newptr=ptr;
+        }else{
+            newptr=malloc(size);
+            if(newptr!=NULL){
+                if(size<((node_t *)(ptr-8))->size)
+                    memcpy(newptr,ptr,size);
+                else
+                    memcpy(newptr,ptr,((node_t *)(ptr-8))->size);
+                free(ptr);
+            }
+        }   
     }
 	return newptr;
 }
@@ -77,12 +81,13 @@ void *malloc(size_t size){
             ret = removeNode(&headFreeListNode,&freeListNode); // Remove node from free list
             break;
         case LARGER_THAN_REQ:
-            if(freeListNode->size >= (size+24)){
+            /*sif(freeListNode->size >= (size+24)){
                 allocNode=splitNode(size,freeListNode,&headFreeListNode); // Split free node
             }else{
-                ret = removeNode(&headFreeListNode,&freeListNode); // Remove node from free list
                 allocNode = freeListNode;
-            }                
+                ret = removeNode(&headFreeListNode,&freeListNode); // Remove node from free list
+            }*/  
+            allocNode=splitNode(size,freeListNode,&headFreeListNode);     
             retAdd=(uint8_t *)allocNode+METADATA_SIZE; // Return address after metadata
             break;
         case SMALLER_THAN_REQ:
@@ -97,7 +102,7 @@ void *malloc(size_t size){
             progrmaBreak=(uint32_t*)((uint8_t*)ptrFreeNode+(sbrkNum*SBRK_ALLOC_SIZE));
             ptrFreeNode->size=sbrkNum*SBRK_ALLOC_SIZE;
             allocNode = splitNode(size,ptrFreeNode,&headFreeListNode);
-            retAdd=(uint8_t*)allocNode+METADATA_SIZE;
+            retAdd=(uint8_t *)allocNode+METADATA_SIZE;
             appendNode(freeListNode,ptrFreeNode);
             break;
         case NULL_PTR:
@@ -114,18 +119,22 @@ void *malloc(size_t size){
             progrmaBreak=(uint32_t*)((uint8_t*)ptrFreeNode+(sbrkNum*SBRK_ALLOC_SIZE));
             ptrFreeNode->size=sbrkNum*SBRK_ALLOC_SIZE;
             //to reduce external fregmantation
-            if(ptrFreeNode->size > (size+24)){
+            /*if(ptrFreeNode->size > (size+16)){
                 allocNode = splitNode(size,ptrFreeNode,&headFreeListNode);
                 headFreeListNode->next=NULL;
                 headFreeListNode->prev=NULL;
             }else{
                 allocNode=ptrFreeNode;
                 headFreeListNode=NULL;
-            }
+            }*/
+            allocNode = splitNode(size,ptrFreeNode,&headFreeListNode);
+            headFreeListNode->next=NULL;
+            headFreeListNode->prev=NULL;
             retAdd=(uint8_t *)allocNode+METADATA_SIZE; // Address returned to the user after the metadata                
             
             break;
         default:
+
             break;
     }
     
@@ -161,29 +170,30 @@ void free(void *ptr){
             ret = OK;
         }else{
             uint8_t *nextNodePtr=NULL; 
-            uint32_t counter=0;
+            size_t counter=0;
+            
             do{
                 nextNodePtr=(uint8_t*)tempPtrNode+tempPtrNode->size;
+                
                 if(nextNodePtr==(uint8_t *)ptrFreeNode){
                     tempPtrNode->size+=ptrFreeNode->size;
-                    //mergeTwoNodes(tempPtrNode,tempPtrNode->next);
                     if((tempPtrNode->prev!=NULL)&&((uint8_t*)tempPtrNode->prev+tempPtrNode->prev->size==(uint8_t*)tempPtrNode)){
                         mergeTwoNodes(tempPtrNode->prev,tempPtrNode);
                     }
-                    if((tempPtrNode->next!=NULL)&&((uint8_t*)tempPtrNode+tempPtrNode->size==(uint8_t*)tempPtrNode->next)){
-                        mergeTwoNodes(tempPtrNode,tempPtrNode->next);
-                    }
                     appendFlag=0;
                     break;
-                }else if(ptrFreeNode<(node_t*)nextNodePtr){
+                }
+                else if(ptrFreeNode<(node_t*)nextNodePtr){
                     addNode(&ptrFreeNode,counter,&headFreeListNode);
                     appendFlag=0;
                     break;
+                }else if((tempPtrNode->next!=NULL)&&((uint8_t*)tempPtrNode+tempPtrNode->size==(uint8_t*)tempPtrNode->next)){
+                    mergeTwoNodes(tempPtrNode,tempPtrNode->next);
                 }else{
                     tempPtrNode=tempPtrNode->next;
                 }
                 counter++;
-            }while((tempPtrNode!=NULL)&&appendFlag);
+            }while((tempPtrNode!=NULL));
             // Append the free node to the free list if it was't merged with any node
             if(appendFlag){
                 ret = appendNode(headFreeListNode,ptrFreeNode); 
@@ -200,7 +210,7 @@ void free(void *ptr){
 
         if(tempPtrNode->size >= (size_t )MIN_FREE_SBRK){
             // Check if the last free memory block is adjacent to the program break
-            //progrmaBreak=sbrk(0);
+            progrmaBreak=sbrk(0);
             if((uint8_t*)tempPtrNode+tempPtrNode->size==(uint8_t*)progrmaBreak){
                 // Release memory from program break
                 progrmaBreak=(uint32_t *)((uint8_t *)progrmaBreak-(tempPtrNode->size));
