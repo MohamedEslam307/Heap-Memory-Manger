@@ -2,11 +2,11 @@
 return_status_t addNode(node_t **ptrNode,size_t nodeIndex,node_t **ptrHead){
     return_status_t ret = OK;
     node_t *tempNode = NULL;
-    uint32_t counter = 0;
+    size_t counter = 0;
     
     // Check if ptrNode is not NULL
     if (NULL != ptrNode) {
-        uint32_t listLength = getLength(*ptrHead);
+        size_t listLength = getLength(*ptrHead);
         if (0 == nodeIndex) {
             if((*ptrHead)==NULL){
                 (*ptrHead)=*ptrNode;
@@ -154,11 +154,11 @@ node_t * splitNode(size_t copySize, node_t *freeNode, node_t **copyHeadFreeListN
 return_status_t removeNode(node_t **ptrHead, node_t **ptrNode) {
     return_status_t ret = OK;
     node_t *tempNode = NULL;
-    uint32_t counter = 0;
+    size_t counter = 0;
     
     // Check if ptrNode is not NULL
     if (NULL != ptrNode) {
-        uint32_t listLength = getLength(*ptrHead);
+        size_t listLength = getLength(*ptrHead);
         if (((*ptrNode)->prev==NULL) && listLength == 0) {
             *ptrHead = NULL; // If the list is empty and index is 0, set the head to NULL.
         } else if (((*ptrNode)->prev==NULL)) {
@@ -420,9 +420,9 @@ return_status_t appendNode(node_t *ptrHead, node_t *ptrNode) {
  * 
  * @return uint32_t The number of nodes in the list.
  */
-uint32_t getLength(node_t *ptrHead) {
+size_t getLength(node_t *ptrHead) {
     node_t *tempNode = NULL;
-    uint32_t len = 0;
+    size_t len = 0;
 
     // Check if ptrHead is not NULL
     if (NULL != ptrHead) {
