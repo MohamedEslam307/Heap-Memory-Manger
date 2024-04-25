@@ -1,6 +1,6 @@
 /*
  * File: my_malloc.c
- * Description: mt heap memory manger functions: malloc , free , calloc and realloc.
+ * Description: my heap memory manger functions: malloc , free , calloc and realloc.
  * Author: Mohamed Eslam
  */
 
