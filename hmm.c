@@ -1,6 +1,6 @@
 /*
  * File: my_malloc.c
- * Description: Implementation of custom memory allocation functions: my_malloc and my_free.
+ * Description: mt heap memory manger functions: malloc , free , calloc and realloc.
  * Author: Mohamed Eslam
  */
 
