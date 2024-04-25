@@ -1,46 +1,62 @@
 #include "DoubleLinkedList.h" // Including the header file for the doubly linked list.
-return_status_t addNode(node_t **ptrNode,size_t nodeIndex,node_t **ptrHead){
-    return_status_t ret = OK;
-    node_t *tempNode = NULL;
-    size_t counter = 0;
-    
-    // Check if ptrNode is not NULL
-    if (NULL != ptrNode) {
-        size_t listLength = getLength(*ptrHead);
-        if (0 == nodeIndex) {
-            if((*ptrHead)==NULL){
-                (*ptrHead)=*ptrNode;
-                (*ptrHead)->next=NULL;
-                (*ptrHead)->prev=NULL;
-            }else{
-                (*ptrNode)->next=(*ptrHead);
-                (*ptrNode)->prev=NULL;
-                (*ptrHead)->prev=(*ptrNode);
-                (*ptrHead)=(*ptrNode);
-            }
-            //*ptrHead = (*ptrNode)->next; // If the index is 0, remove the first node.
-            //removeBeginning(ptrNode);
-        } else if (listLength == nodeIndex) {
-            appendNode(*ptrHead,*ptrNode); // If the index is the last node, remove the end node.
-        } else if (listLength <= nodeIndex) {
-            ret = NOK; // If the index is out of range, set the return status to NOK.
-        } else {
-            node_t *tempNode=*ptrHead;
-            while(nodeIndex-1>counter){
-                counter++;
-                tempNode=tempNode->next;
-            }
-            (*ptrNode)->prev=tempNode;
-            (*ptrNode)->next=tempNode->next;
-            tempNode->next->prev=(*ptrNode);
-            tempNode->next=(*ptrNode);
-            // Update next and prev pointers of adjacent nodes to remove the node.
-            //((*ptrNode)->next)->prev = (*ptrNode)->prev;
-            //((*ptrNode)->prev)->next = (*ptrNode)->next;
-        }
-    } else {
-        ret = NULLPTR; // If ptrNode is NULL, set the return status to NULLPTR.
+
+/**
+ * @brief Inserts a node into the doubly linked list at a specified index.
+ *
+ * This function takes pointers to the head of the list (`ptrHead`), a pointer to the
+ * node to be inserted (`ptrNode`), and the index at which to insert (`nodeIndex`). It
+ * updates the pointers of surrounding nodes to maintain the list structure after insertion.
+ *
+ * @param ptrNode Pointer to the node to be inserted into the list.
+ * @param nodeIndex Index at which to insert the node (0-based).
+ * @param ptrHead Pointer to the head node of the doubly linked list (may be updated).
+ *
+ * @return return_status_t indicating success (OK), error (NOK, out-of-range index),
+ *         or NULL pointer error (NULLPTR).
+ */
+return_status_t addNode(node_t **ptrNode, size_t nodeIndex, node_t **ptrHead) {
+    if (ptrNode == NULL) {
+        // Handle NULL pointer for ptrNode
+        return NULLPTR;
     }
+
+    return_status_t ret = OK;
+    size_t listLength = getLength(*ptrHead);
+
+    // Check if insertion is at the beginning (index 0)
+    if (nodeIndex == 0) {
+        if (*ptrHead == NULL) {
+            // Inserting into an empty list
+            *ptrHead = *ptrNode;
+            (*ptrHead)->next = NULL;
+            (*ptrHead)->prev = NULL;
+        } else {
+            // Inserting at the head of a non-empty list
+            (*ptrNode)->next = *ptrHead;
+            (*ptrNode)->prev = NULL;
+            (*ptrHead)->prev = *ptrNode;
+            *ptrHead = *ptrNode;
+        }
+    } else if (nodeIndex == listLength) {
+        // Insertion at the end (append)
+        appendNode(*ptrHead, *ptrNode);
+    } else if (nodeIndex < listLength) {
+        // Insertion in the middle of the list
+        node_t *tempNode = *ptrHead;
+        size_t counter = 0;
+        while (counter < nodeIndex - 1) {
+            counter++;
+            tempNode = tempNode->next;
+        }
+        (*ptrNode)->prev = tempNode;
+        (*ptrNode)->next = tempNode->next;
+        tempNode->next->prev = *ptrNode;
+        tempNode->next = *ptrNode;
+    } else {
+        // Index out of range
+        ret = NOK;
+    }
+
     return ret;
 }
 /**
@@ -71,69 +87,6 @@ node_t * splitNode(size_t copySize, node_t *freeNode, node_t **copyHeadFreeListN
         if(NULL==(*copyHeadFreeListNode)){
             (*copyHeadFreeListNode)=freeNode;
         }
-        /*
-        size_t tempOldNodeSize=freeNode->size;
-        if((freeNode->prev==NULL)&&(freeNode->next==NULL)){
-            allocNode=freeNode;
-            allocNode->size=copySize;
-            freeNode=(node_t *)((uint8_t *)freeNode+copySize);
-            freeNode->size=tempOldNodeSize-copySize;
-            freeNode->next=NULL;
-            freeNode->prev=NULL;
-            *copyHeadFreeListNode=freeNode;
-        }else if(freeNode->prev==NULL){
-            allocNode=freeNode;
-            allocNode->size=copySize;
-            freeNode=(node_t *)((uint8_t *)freeNode+copySize);
-            freeNode->size=tempOldNodeSize-copySize;
-            freeNode->prev=NULL;
-            freeNode->next=allocNode->next;
-            allocNode->next->prev=freeNode;
-            *copyHeadFreeListNode=freeNode;
-        }else if(freeNode->next==NULL){
-            allocNode=freeNode;
-            allocNode->size=copySize;
-            freeNode=(node_t *)((uint8_t *)freeNode+copySize);
-            freeNode->size=tempOldNodeSize-copySize;
-            freeNode->next=NULL;
-            freeNode->prev=allocNode->prev;
-            allocNode->prev->next=freeNode;
-        }
-        else{
-            allocNode=freeNode;
-            allocNode->size=copySize;
-            freeNode=(node_t *)((uint8_t *)freeNode+copySize);
-            freeNode->size=tempOldNodeSize-copySize;
-            freeNode->prev=allocNode->prev;
-            freeNode->next=allocNode->next;
-            allocNode->prev->next=freeNode;
-            allocNode->next->prev=freeNode;
-            
-        }*/
-        /*
-        node_t *oldNode = (*freeNode); // Store the freeNode in oldNode.
-        size_t tempOldNodeSize = (oldNode)->size; // Store the size of the oldNode.
-        allocNode = (node_t *)oldNode; // Allocate memory for the allocNode.
-        (*freeNode) = (node_t *)((uint8_t *)oldNode + copySize); // Update freeNode to point to the remaining memory.
-        (*freeNode)->size = oldNode->size - copySize; // Update the size of the freeNode.
-        allocNode->size = copySize; // Update the size of the allocated node.
-
-        // Update next and prev pointers for the new nodes
-        (*freeNode)->next = oldNode->next;
-        (*freeNode)->prev = oldNode->prev;
-
-        // Update next and prev pointers of adjacent nodes
-        if (oldNode->next != NULL) {
-            oldNode->next->prev = (*freeNode);
-        } else {
-            (*freeNode)->next = NULL;
-        }
-        if (oldNode->prev != NULL) {
-            oldNode->prev->next = (*freeNode);
-        } else {
-            (*freeNode)->prev = NULL;
-            (*copyHeadFreeListNode) = (*freeNode);
-        }*/
     }
     return allocNode;
 }
