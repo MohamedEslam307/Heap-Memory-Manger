@@ -25,9 +25,21 @@ typedef enum {
   NOK,                       // Operation failed (generic error)
   NULLPTR,                    // Null pointer encountered
 } return_status_t;
-
+/**
+ * @brief Inserts a node into the doubly linked list at a specified index.
+ *
+ * This function takes pointers to the head of the list (`ptrHead`), a pointer to the
+ * node to be inserted (`ptrNode`), and the index at which to insert (`nodeIndex`). It
+ * updates the pointers of surrounding nodes to maintain the list structure after insertion.
+ *
+ * @param ptrNode Pointer to the node to be inserted into the list.
+ * @param nodeIndex Index at which to insert the node (0-based).
+ * @param ptrHead Pointer to the head node of the doubly linked list (may be updated).
+ *
+ * @return return_status_t indicating success (OK), error (NOK, out-of-range index),
+ *         or NULL pointer error (NULLPTR).
+ */
 return_status_t addNode(node_t **ptrNode,size_t nodeIndex,node_t **ptrHead);
-return_status_t addInHead(node_t *ptrNode,size_t nodeIndex,node_t **copyHeadFreeListNode);
 
 /**
  * @brief Appends a node to the end of the doubly linked list.
@@ -160,6 +172,6 @@ return_status_t removeEnd(node_t **ptrNode);
  * 
  * @return uint32_t The number of nodes in the list.
  */
-uint32_t getLength(node_t *ptrHead);
-
+size_t getLength(node_t *ptrHead);
+return_status_t addInHead(node_t *ptrNode,size_t nodeIndex,node_t **copyHeadFreeListNode);
 #endif
