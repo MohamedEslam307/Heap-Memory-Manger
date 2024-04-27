@@ -21,5 +21,5 @@
 
 ## Further Considerations:
     Error Handling: Consider incorporating error handling mechanisms to gracefully handle potential issues during memory allocation and deallocation.
-    Testing: Implement some test scripts and other testing strategies to ensure the correctness and robustness of my memory manager code.
+    Testing: Implement some test scripts and other testing strategies to ensure the correctness and robustness of my memory manager code and finally i made bash                  works with my memory manger.
 
