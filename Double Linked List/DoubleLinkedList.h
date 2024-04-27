@@ -54,18 +54,6 @@ return_status_t addNode(node_t **ptrNode,size_t nodeIndex,node_t **ptrHead);
  */
 return_status_t appendNode(node_t *ptrHead,node_t *ptrNode);
 /**
- * @brief Creates a new doubly linked list with a single node.
- *
- * This function takes a pointer to a node (`ptrHead`) that will be used as the head of the list.
- * It initializes the node's size, next, and prev pointers to appropriate values for a single-node list.
- *
- * @param ptrHead Pointer to the node that will become the head of the list.
- * @param copyHeadFreeListNode Pointer to update the head of the free list.
- * 
- * @return return_status_t indicating success (OK) or error (NOK, NULLPTR).
- */
-return_status_t createList(node_t *ptrHead,node_t ** copyHeadFreeListNode);
-/**
  * @brief Merges two adjacent nodes in the doubly linked list.
  *
  * This function takes pointers to the first node (`ptrFristNode`) and the second node (`ptrSecNode`) to be merged.
@@ -79,22 +67,6 @@ return_status_t createList(node_t *ptrHead,node_t ** copyHeadFreeListNode);
  */
 return_status_t mergeTwoNodes(node_t *ptrFristNode,node_t *ptrSecNode);
 /**
- * @brief Splits a node in the doubly linked list into two nodes based on a specified size.
- *
- * This function takes the size to be copied (`copySize`), pointers to output allocated and free nodes (`allocNode` and `freeNode`),
- * and a pointer to potentially update the head of the free list (`copyHeadFreeListNode`).
- * It splits the original node into two nodes: one with the requested size and another with the remaining memory.
- * The function updates pointers and assigns the appropriate nodes to the output pointers.
- *
- * @param copySize Size of the data to be copied into the allocated node.
- * @param allocNode Output pointer to receive the allocated node.
- * @param freeNode Output pointer to receive the free node (remaining memory).
- * @param copyHeadFreeListNode Pointer to potentially update the head of the free list (optional).
- * 
- * @return void (no return value).
- */
-node_t * splitNode(size_t copySize,node_t *freeNode,node_t ** copyHeadFreeListNode);
-/**
  * @brief (Optional) Prints the contents of the doubly linked list to standard output.
  *
  * This function takes the pointer to the head node (`ptrHead`) of the list.
@@ -107,25 +79,6 @@ node_t * splitNode(size_t copySize,node_t *freeNode,node_t ** copyHeadFreeListNo
  * @return return_status_t indicating success (OK) or error (NOK) or (NULLPTR).
  */
 return_status_t displayList(node_t *ptrHead);
-/**
- * @brief Finds a node in the list that has sufficient size to accommodate a requested size.
- *
- * This function takes the head of the list (`ptrHead`), a desired size (`copySize`), pointers to output status (`status`) and index (`index`),
- * and searches through the list.
- * The `status` pointer (output) can be used to indicate:
- *   - EQUIV_REQ (1): Node size is exactly equal to the requested size.
- *   - LARGER_THAN_REQ (2): Node size is larger than the requested size.
- *   - SMALLER_THAN_REQ (3): Node size is smaller than the requested size.
- * The `index` pointer (output) holds the index of the found node in the list (0-based).
- *
- * @param ptrHead Pointer to the head node of the doubly linked list.
- * @param copySize Size to be accommodated in the found node.
- * @param status Output pointer to receive a status code (EQUIV_REQ, LARGER_THAN_REQ, SMALLER_THAN_REQ).
- * @param index Output pointer to receive the index of the found node (0-based).
- * 
- * @return node_t* Pointer to the found node, or NULL if no suitable node is found.
- */
-node_t * findNodeSize(node_t *ptrHead,size_t copySize,uint8_t *status,uint32_t *index);
 /**
  * @brief Removes a node from the doubly linked list at a specified index.
  *

@@ -6,8 +6,8 @@
 #include <string.h>
 
 #define METADATA_SIZE 8 // Size of metadata stored with each allocated memory block
-#define SBRK_ALLOC_SIZE (33*4096) // Size of memory to request from OS using sbrk
-#define MIN_FREE_SBRK (28*4096) // Minimum size of free memory to release using sbrk
+#define SBRK_ALLOC_SIZE (4*1024*1024) // Size of memory to request from OS using sbrk
+#define MIN_FREE_SBRK (3*1024*1024) // Minimum size of free memory to release using sbrk
 
 
 /**

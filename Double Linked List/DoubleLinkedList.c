@@ -60,38 +60,6 @@ return_status_t addNode(node_t **ptrNode, size_t nodeIndex, node_t **ptrHead) {
     return ret;
 }
 /**
- * @brief Splits a node in the doubly linked list into two nodes based on a specified size.
- *
- * This function takes the size to be copied (`copySize`), pointers to output allocated and free nodes (`allocNode` and `freeNode`),
- * and a pointer to potentially update the head of the free list (`copyHeadFreeListNode`).
- * It splits the original node into two nodes: one with the requested size and another with the remaining memory.
- * The function updates pointers and assigns the appropriate nodes to the output pointers.
- *
- * @param copySize Size of the data to be copied into the allocated node.
- * @param allocNode Output pointer to receive the allocated node.
- * @param freeNode Output pointer to receive the free node (remaining memory).
- * @param copyHeadFreeListNode Pointer to potentially update the head of the free list (optional).
- * 
- * @return void (no return value).
- */
-node_t * splitNode(size_t copySize, node_t *freeNode, node_t **copyHeadFreeListNode) {
-    // Check if freeNode is NULL
-    node_t *allocNode=NULL;
-    if (NULL == freeNode) {
-        allocNode = NULL; // If freeNode is NULL, set allocNode to NULL.
-    } else {
-        size_t tempOldNodeSize=freeNode->size;
-        allocNode=(node_t *)((uint8_t *)freeNode+(tempOldNodeSize-copySize));
-        freeNode->size=tempOldNodeSize-copySize;
-        allocNode->size=copySize;
-        if(NULL==(*copyHeadFreeListNode)){
-            (*copyHeadFreeListNode)=freeNode;
-        }
-    }
-    return allocNode;
-}
-
-/**
  * @brief Removes a node from the doubly linked list at a specified index.
  *
  * This function takes pointers to the head of the list (`ptrHead`), a pointer to store the removed node (`ptrNode`), 
@@ -179,65 +147,6 @@ return_status_t removeBeginning(node_t **ptrHead) {
     }   
     return ret;
 }
-
-/**
- * @brief Finds a node in the list that has sufficient size to accommodate a requested size.
- *
- * This function takes the head of the list (`ptrHead`), a desired size (`copySize`), pointers to output status (`status`) and index (`index`),
- * and searches through the list.
- * The `status` pointer (output) can be used to indicate:
- *   - EQUIV_REQ (1): Node size is exactly equal to the requested size.
- *   - LARGER_THAN_REQ (2): Node size is larger than the requested size.
- *   - SMALLER_THAN_REQ (3): Node size is smaller than the requested size.
- * The `index` pointer (output) holds the index of the found node in the list (0-based).
- *
- * @param ptrHead Pointer to the head node of the doubly linked list.
- * @param copySize Size to be accommodated in the found node.
- * @param status Output pointer to receive a status code (EQUIV_REQ, LARGER_THAN_REQ, SMALLER_THAN_REQ).
- * @param index Output pointer to receive the index of the found node (0-based).
- * 
- * @return node_t* Pointer to the found node, or NULL if no suitable node is found.
- */
-node_t * findNodeSize(node_t *ptrHead, size_t copySize, uint8_t *status, uint32_t *index) {
-    node_t *retAdd = NULL;
-    uint8_t statusFlag = 1;
-    // Check if pointers are NULL
-    if ((NULL == ptrHead) || (status == NULL) || (NULL == index)) {
-        retAdd = NULL;
-        *status = NULL_PTR; // Set status to NULL_PTR if any of the pointers are NULL.
-    } else {
-        uint32_t tempIndex = 0;
-        node_t *tempNode = ptrHead;
-        
-        // Iterate through the list to find a suitable node.
-        do {
-            if (tempNode->size == copySize) {
-                *status = EQUIV_REQ; // Set status to EQUIV_REQ if node size is equal to copySize.
-                retAdd = tempNode;
-                *index = tempIndex;
-                statusFlag = 0;
-                break;
-            } else if (tempNode->size > (copySize+16)) {
-                *status = LARGER_THAN_REQ; // Set status to LARGER_THAN_REQ if node size is larger than copySize.
-                retAdd = tempNode;
-                *index = tempIndex;
-                statusFlag = 0;
-                break;
-            } else {
-                // Node size is smaller than copySize, continue searching.
-            }
-            retAdd = tempNode;
-            tempNode = tempNode->next;
-            tempIndex++;
-        } while (NULL != tempNode);
-
-        if (statusFlag) {
-            *status = SMALLER_THAN_REQ; // Set status to SMALLER_THAN_REQ if no suitable node is found.
-        }
-    }
-    return retAdd;
-}
-
 /**
  * @brief Merges two adjacent nodes in the doubly linked list.
  *
@@ -309,32 +218,6 @@ return_status_t displayList(node_t *ptrHead) {
     }
     return ret;
 }
-
-/**
- * @brief Creates a new doubly linked list with a single node.
- *
- * This function takes a pointer to a node (`ptrHead`) that will be used as the head of the list.
- * It initializes the node's size, next, and prev pointers to appropriate values for a single-node list.
- *
- * @param ptrHead Pointer to the node that will become the head of the list.
- * @param copyHeadFreeListNode Pointer to update the head of the free list.
- * 
- * @return return_status_t indicating success (OK) or error (NOK, NULLPTR).
- */
-return_status_t createList(node_t *ptrHead, node_t **copyHeadFreeListNode) {
-    return_status_t ret = NOK;
-    // Check if ptrHead is not NULL
-    if (ptrHead != NULL) {
-        ptrHead->prev = NULL;
-        ptrHead->next = NULL;
-        *copyHeadFreeListNode = ptrHead; // Update the head of the free list.
-        ret = OK;
-    } else {
-        ret = NULLPTR; // If ptrHead is NULL, set the return status to NULLPTR.
-    } 
-    return ret;
-}
-
 /**
  * @brief Appends a node to the end of the doubly linked list.
  *
@@ -371,6 +254,8 @@ return_status_t appendNode(node_t *ptrHead, node_t *ptrNode) {
  *
  * @param ptrHead Pointer to the head node of the doubly linked list.
  * 
+ * @note it returns 0 when the list is empty and 1 if their is only the head
+ * 
  * @return uint32_t The number of nodes in the list.
  */
 size_t getLength(node_t *ptrHead) {
@@ -382,12 +267,12 @@ size_t getLength(node_t *ptrHead) {
         tempNode = ptrHead;
         
         // Iterate through the list and count nodes
-        while (tempNode->next != NULL) {
+        while (tempNode!= NULL) {
             tempNode = tempNode->next;
             len++;
         }
     } else {
-        len = -1; // If ptrHead is NULL, set the length to 0.
+        len = 0; // If ptrHead is NULL, set the length to 0.
     }
     return len;
 }

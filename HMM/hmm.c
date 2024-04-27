@@ -5,8 +5,9 @@
  */
 
 #include "hmm.h" // Include header file for custom data structures and functions
-//#include "DoubleLinkedList.c"
-//#include "main.c"
+
+static node_t * findSuitableNode(node_t *ptrHead, size_t copySize, uint8_t *status);
+static node_t * splitNode(size_t copySize, node_t *freeNode, node_t **copyHeadFreeListNode);
 
 node_t *headFreeListNode = NULL; // Global pointer to the head of the free memory list
 static uint32_t* programBreak = 0; // Global pointer to the program break
@@ -34,7 +35,6 @@ void *malloc(size_t size){
     }
 
     return_status_t ret = NOK; // Return status for function calls
-    uint32_t ptrFreeNodeIndex = 0; // Index of found node in the free list
     uint8_t sizeListStat = 0; // Status of size comparison with free memory blocks
     node_t *allocNode = NULL; // Pointer to the allocated memory block
     size = size + METADATA_SIZE; // Add metadata size to requested size
@@ -42,7 +42,7 @@ void *malloc(size_t size){
     uint32_t sbrkNum = 0; // Counter for the number of sbrk calls
 
     // Traverse free list to find free node
-    node_t *freeListNode = findNodeSize(headFreeListNode, size, &sizeListStat, &ptrFreeNodeIndex);
+    node_t *freeListNode = findSuitableNode(headFreeListNode, size, &sizeListStat);
 
     switch (sizeListStat) {
         case EQUIV_REQ:
@@ -70,6 +70,7 @@ void *malloc(size_t size){
             }
             programBreak = (uint32_t *)((uint8_t *)ptrFreeNode + (sbrkNum * SBRK_ALLOC_SIZE));
             ptrFreeNode->size = sbrkNum * SBRK_ALLOC_SIZE;
+            //to reduce external fragmentation
             if (ptrFreeNode->size >= (size + 24)) {
                 allocNode = splitNode(size, ptrFreeNode, &headFreeListNode); // Split free node
                 appendNode(freeListNode, ptrFreeNode); //add the free part node in the end of the free list
@@ -143,33 +144,19 @@ void free(void *ptr) {
             
             do {
                 nextNodePtr = (uint8_t *)tempPtrNode + tempPtrNode->size;
-                
                 if (nextNodePtr == (uint8_t *)ptrFreeNode) {
                     // Found a free node adjacent to the one being freed, merge them
                     tempPtrNode->size += ptrFreeNode->size;
-                    if ((tempPtrNode->prev != NULL) && ((uint8_t *)tempPtrNode->prev + tempPtrNode->prev->size == (uint8_t *)tempPtrNode)) {
-                        mergeTwoNodes(tempPtrNode->prev, tempPtrNode); // Merge adjacent free blocks
-                    }
-                    if ((tempPtrNode->next != NULL) && ((uint8_t *)tempPtrNode + tempPtrNode->size == (uint8_t *)tempPtrNode->next)) {
-                        mergeTwoNodes(tempPtrNode, tempPtrNode->next); // Merge adjacent free blocks
-                    }
+                    ptrFreeNode=NULL;
                     appendFlag = 0; // No need to append the freed node, it's merged with another
                     break;
                 }
                 else if (ptrFreeNode < (node_t *)nextNodePtr) {
                     // Insert the freed node before the current node in the free list
                     addNode(&ptrFreeNode, counter, &headFreeListNode); 
-                    if ((tempPtrNode->prev != NULL) && ((uint8_t *)tempPtrNode->prev + tempPtrNode->prev->size == (uint8_t *)tempPtrNode)) {
-                        mergeTwoNodes(tempPtrNode->prev, tempPtrNode); // Merge adjacent free blocks
-                    }
-                    if ((tempPtrNode->next != NULL) && ((uint8_t *)tempPtrNode + tempPtrNode->size == (uint8_t *)tempPtrNode->next)) {
-                        mergeTwoNodes(tempPtrNode, tempPtrNode->next); // Merge adjacent free blocks
-                    }
                     appendFlag = 0;
                     break;
-                } else if ((tempPtrNode->next != NULL) && ((uint8_t *)tempPtrNode + tempPtrNode->size == (uint8_t *)tempPtrNode->next)) {
-                    mergeTwoNodes(tempPtrNode, tempPtrNode->next); // Merge adjacent free blocks
-                } else {
+                }else {
                     tempPtrNode = tempPtrNode->next;
                 }
                 counter++;
@@ -177,6 +164,13 @@ void free(void *ptr) {
             // Append the free node to the free list if it wasn't merged with any node
             if (appendFlag) {
                 ret = appendNode(headFreeListNode, ptrFreeNode); // Append the free node to the free list
+            }else{
+                if ((tempPtrNode->prev != NULL) && ((uint8_t *)tempPtrNode->prev + tempPtrNode->prev->size == (uint8_t *)tempPtrNode)) {
+                    mergeTwoNodes(tempPtrNode->prev, tempPtrNode); // Merge adjacent free blocks
+                }
+                if ((tempPtrNode->next != NULL) && ((uint8_t *)tempPtrNode + tempPtrNode->size == (uint8_t *)tempPtrNode->next)) {
+                    mergeTwoNodes(tempPtrNode, tempPtrNode->next); // Merge adjacent free blocks
+                }
             }
         }
         
@@ -255,7 +249,6 @@ void *realloc(void *ptr, size_t size) {
     } else if (0 == size) {
         free(ptr); // Free memory if size is zero
     } else {
-
         if (size <= ((node_t *)(ptr - 8))->size - 8) {
             newptr = ptr; // Return ptr if size is smaller or equal than the current allocated size
         } else {
@@ -267,4 +260,89 @@ void *realloc(void *ptr, size_t size) {
         }
     }
     return newptr; // Return pointer to reallocated memory block
+}
+
+/**
+ * @brief Finds a node in the list that has sufficient size to accommodate a requested size.
+ *
+ * This function takes the head of the list (`ptrHead`), a desired size (`copySize`), pointers to output status (`status`) and index (`index`),
+ * and searches through the list.
+ * The `status` pointer (output) can be used to indicate:
+ *   - EQUIV_REQ (1): Node size is exactly equal to the requested size.
+ *   - LARGER_THAN_REQ (2): Node size is larger than the requested size.
+ *   - SMALLER_THAN_REQ (3): Node size is smaller than the requested size.
+ * The `index` pointer (output) holds the index of the found node in the list (0-based).
+ *
+ * @param ptrHead Pointer to the head node of the doubly linked list.
+ * @param copySize Size to be accommodated in the found node.
+ * @param status Output pointer to receive a status code (EQUIV_REQ, LARGER_THAN_REQ, SMALLER_THAN_REQ).
+ * 
+ * @return node_t* Pointer to the found node, or NULL if no suitable node is found.
+ */
+static node_t * findSuitableNode(node_t *ptrHead, size_t copySize, uint8_t *status) {
+    node_t *retAdd = NULL;
+    uint8_t statusFlag = 1;
+    // Check if pointers are NULL
+    if ((NULL == ptrHead) || (status == NULL) ) {
+        retAdd = NULL;
+        *status = NULL_PTR; // Set status to NULL_PTR if any of the pointers are NULL.
+    } else {
+        uint32_t tempIndex = 0;
+        node_t *tempNode = ptrHead;
+        
+        // Iterate through the list to find a suitable node.
+        do {
+            if (tempNode->size == copySize) {
+                *status = EQUIV_REQ; // Set status to EQUIV_REQ if node size is equal to copySize.
+                retAdd = tempNode;
+                statusFlag = 0;
+                break;
+            } else if (tempNode->size > (copySize+16)) {
+                *status = LARGER_THAN_REQ; // Set status to LARGER_THAN_REQ if node size is larger than copySize.
+                retAdd = tempNode;
+                statusFlag = 0;
+                break;
+            } else {
+                // Node size is smaller than copySize, continue searching.
+            }
+            retAdd = tempNode;
+            tempNode = tempNode->next;
+            tempIndex++;
+        } while (NULL != tempNode);
+
+        if (statusFlag) {
+            *status = SMALLER_THAN_REQ; // Set status to SMALLER_THAN_REQ if no suitable node is found.
+        }
+    }
+    return retAdd;
+}
+/**
+ * @brief Splits a node in the doubly linked list into two nodes based on a specified size.
+ *
+ * This function takes the size to be copied (`copySize`), pointers to output allocated and free nodes (`allocNode` and `freeNode`),
+ * and a pointer to potentially update the head of the free list (`copyHeadFreeListNode`).
+ * It splits the original node into two nodes: one with the requested size and another with the remaining memory.
+ * The function updates pointers and assigns the appropriate nodes to the output pointers.
+ *
+ * @param copySize Size of the data to be copied into the allocated node.
+ * @param freeNode Output pointer to receive the free node (remaining memory).
+ * @param copyHeadFreeListNode Pointer to potentially update the head of the free list (optional).
+ * 
+ * @return void (no return value).
+ */
+static node_t * splitNode(size_t copySize, node_t *freeNode, node_t **copyHeadFreeListNode) {
+    // Check if freeNode is NULL
+    node_t *allocNode=NULL;
+    if (NULL == freeNode) {
+        allocNode = NULL; // If freeNode is NULL, set allocNode to NULL.
+    } else {
+        size_t tempOldNodeSize=freeNode->size;
+        allocNode=(node_t *)((uint8_t *)freeNode+(tempOldNodeSize-copySize));
+        freeNode->size=tempOldNodeSize-copySize;
+        allocNode->size=copySize;
+        if(NULL==(*copyHeadFreeListNode)){
+            (*copyHeadFreeListNode)=freeNode;
+        }
+    }
+    return allocNode;
 }
