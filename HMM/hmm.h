@@ -2,7 +2,7 @@
 #define HMM_H
 
 #include <unistd.h>  // For sbrk (if used)
-#include "DoubleLinkedList.h"  // Include header for doubly linked list implementation
+#include "./../DoubleLinkedList/DoubleLinkedList.h"  // Include header for doubly linked list implementation
 #include <string.h>
 
 #define METADATA_SIZE 8 // Size of metadata stored with each allocated memory block
