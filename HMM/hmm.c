@@ -30,7 +30,7 @@ void *malloc(size_t size){
     node_t *ptrFreeNode; // Pointer to a free memory block in the free memory list
 
     // Adjust size to at least the size of a pointer
-    if ((size >= 0) && (size < (sizeof(void *) * 2))) {
+    if (size < (sizeof(void *) * 2)) {
         size = sizeof(void *) * 2;
     }
 
@@ -184,7 +184,7 @@ void free(void *ptr) {
 
         if (tempPtrNode->size >= (size_t)MIN_FREE_SBRK) {
             // Check if the last free memory block is adjacent to the program break
-            programBreak = sbrk(0);
+            
             if ((uint8_t *)tempPtrNode + tempPtrNode->size == (uint8_t *)programBreak) {
                 // Release memory from program break
                 programBreak = (uint32_t *)((uint8_t *)programBreak - (tempPtrNode->size));
