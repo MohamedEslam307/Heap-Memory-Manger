@@ -167,9 +167,17 @@ void free(void *ptr) {
             }else{
                 if ((tempPtrNode->prev != NULL) && ((uint8_t *)tempPtrNode->prev + tempPtrNode->prev->size == (uint8_t *)tempPtrNode)) {
                     mergeTwoNodes(tempPtrNode->prev, tempPtrNode); // Merge adjacent free blocks
+                    //check for further merggeng
+                    if ((tempPtrNode->prev != NULL) && ((uint8_t *)tempPtrNode->prev + tempPtrNode->prev->size == (uint8_t *)tempPtrNode)) {
+                        mergeTwoNodes(tempPtrNode->prev, tempPtrNode); // Merge adjacent free blocks
+                    }
                 }
                 if ((tempPtrNode->next != NULL) && ((uint8_t *)tempPtrNode + tempPtrNode->size == (uint8_t *)tempPtrNode->next)) {
                     mergeTwoNodes(tempPtrNode, tempPtrNode->next); // Merge adjacent free blocks
+                    //check for further merggeng
+                    if ((tempPtrNode->next != NULL) && ((uint8_t *)tempPtrNode + tempPtrNode->size == (uint8_t *)tempPtrNode->next)) {
+                        mergeTwoNodes(tempPtrNode, tempPtrNode->next); // Merge adjacent free blocks
+                    }
                 }
             }
         }
