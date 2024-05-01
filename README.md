@@ -21,4 +21,6 @@ Include the header file (hmm.h) in your source code and it provided functions li
 
 # Further Considerations:
 Error Handling: Consider incorporating error handling mechanisms to gracefully handle potential issues during memory allocation and deallocation.
-Testing: Implement some test scripts and other testing strategies to ensure the correctness and robustness of my memory manager code and finally i replaced the glibc allocator with our custom solution. The results were truly impressive, bash run with my heap memory manager 💪🏻🥳
+
+# Testing:
+Implement some test scripts and other testing strategies to ensure the correctness and robustness of my memory manager code and finally i replaced the glibc allocator with our custom solution. The results were truly impressive, bash run with my heap memory manager 💪🏻🥳
