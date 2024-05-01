@@ -1,6 +1,6 @@
 # My Heap Memory Manager
 
-## This repository provides a custom implementation of a heap memory manager in C. It offers functions for common memory management operations:
+This repository provides a custom implementation of a heap memory manager in C. It offers functions for common memory management operations:
     malloc(size): Allocates a block of memory of the specified size on the heap.
     free(ptr): Deallocates a previously allocated memory block pointed to by ptr.
     calloc(nmemb, size): Allocates memory for an array of nmemb elements of size size and initializes all elements to zero.
